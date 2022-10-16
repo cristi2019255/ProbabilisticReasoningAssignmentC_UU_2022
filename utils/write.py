@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pandas as pd
+import os
 
-def read_data(filename, cols = None) -> pd.DataFrame:
-    df = pd.read_csv(filename)
-    if cols is not None:
-        return df[cols]
-    return df
-
-def read_stan_results(filename = "results.csv") -> pd.DataFrame:
-    df = pd.read_csv(filename, delimiter=",")
-    return df
+def write_results(fit, file_name = "results.txt", cols = ["a", "b", "sigma"], folder = "Q1"):
+    os.makedirs(os.path.join("results", folder), exist_ok = True)
+    file_name = os.path.join("results", folder, file_name)
+    
+    results = fit.describe()[cols]
+    results.to_csv(file_name, sep = ",", index = True)
