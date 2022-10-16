@@ -12,25 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from hierarchical_flow import hierarchical_flow, hierarchical_flow_Q4
-from simple_flow import simple_flow
-
-QUESTION = "Q4_B"
-
-def main():
-    question_solvers = {
-        "Q1": simple_flow,
-        "Q2": simple_flow,
-        "Q3_A": hierarchical_flow,
-        "Q3_B": hierarchical_flow,
-        "Q4_A": hierarchical_flow_Q4,
-        "Q4_B": hierarchical_flow_Q4
-    }
-    if QUESTION in question_solvers:
-        question_solvers[QUESTION](QUESTION)
-    else:
-        print("Question not implemented")
-
-if __name__ == "__main__":
-    main()
+def construct_model_function(cols = ["a", "b"]):
+    def model_function(x, params):
+        a, b = params[cols[0]], params[cols[1]]
+        return a + b * x
+    return model_function

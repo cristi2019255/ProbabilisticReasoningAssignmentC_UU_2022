@@ -19,6 +19,7 @@ import pandas as pd
 
 def plot_data(x: List[float], y: List[float], title="Temperature vs d18_O", x_label= "d18_O_c - d18_O_w", y_label = "Temperature T", file_name = "data.png", folder = "Q1"):
     os.makedirs(os.path.join("plots", folder), exist_ok=True)    
+    plt.figure(figsize=(15, 10))
     plt.cla()
     plt.title(title)
     plt.xlabel(x_label)
@@ -26,6 +27,26 @@ def plot_data(x: List[float], y: List[float], title="Temperature vs d18_O", x_la
     plt.scatter(x, y)
     file_name = os.path.join("plots", folder, file_name)
     plt.savefig(file_name)
+    
+def plot_predictions(x: List[float], y: List[float], pred: pd.DataFrame, another_pred: pd.DataFrame = None, title="Temperature vs d18_O", x_label= "d18_O_c - d18_O_w", y_label = "Temperature T", file_name = "data.png", folder = "Q1"):
+    os.makedirs(os.path.join("plots", folder), exist_ok=True)    
+    plt.figure(figsize=(15, 10))
+    plt.cla()
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.scatter(x, y)
+    means = pred["mean"].to_list()
+    stds = pred["std"].to_list()
+    plt.errorbar(x, means, yerr=stds, color="red", label="Predicted temperature", fmt=".", capsize=5, capthick=2, ecolor="red", elinewidth=2)
+    
+    if another_pred is not None:
+        plt.errorbar(x, another_pred["mean"].to_list(), yerr=another_pred["std"].to_list(), color="green", label="Predicted temperature without considering uncertainty", fmt=".", capsize=5, capthick=2, ecolor="green", elinewidth=2, alpha=0.5)
+    
+    plt.legend()
+    file_name = os.path.join("plots", folder, file_name)
+    plt.savefig(file_name)
+    
     
 def plot_data_and_fit(x: List[float], y: List[float], fit:pd.DataFrame, model_function, model_name = "Linear regression", title="Temperature vs d18_O", x_label= "d18_O_c - d18_O_w", y_label = "Temperature T", file_name = "data_fit.png", cols = ["a", "b", "sigma"], folder = "Q1"):
     os.makedirs(os.path.join("plots", folder), exist_ok=True)    

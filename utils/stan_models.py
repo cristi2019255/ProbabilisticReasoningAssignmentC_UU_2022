@@ -81,7 +81,7 @@ def get_stan_code(question = "Q1"):
     """
     
     stan_code_q3_mix_pooling = """
-    data {            
+        data {            
             int<lower=0> N; // number of observations
             real d18_O_w[N]; // d18_O of water
             real d18_O_c[N]; // d18_O of carbon
@@ -99,10 +99,57 @@ def get_stan_code(question = "Q1"):
         }
         
         transformed parameters {
-            real theta[N];  
+            real theta[N];
+            
             for (i in 1:N)
-                theta[i] = a + b * (d18_O_c[i] - d18_O_w[i]);        // difference between the two d18_O values
+                theta[i] = a + b * (d18_O_c[i] - d18_O_w[i]);        // difference between the two observed d18_O values
         }
+            
+        model {
+            target += normal_lpdf(a | a_m, sigma_a);
+            target += normal_lpdf(b | b_m, sigma_b);
+            target += normal_lpdf(y | theta, sigma);
+        }
+    """
+    
+    stan_code_q4 = """
+        data {            
+            int<lower=0> N; // number of observations
+            int<lower=0> K; // number of new observations
+            
+            real d18_O_w[N]; // d18_O of water
+            real d18_O_c[N]; // d18_O of carbon
+            real<lower=-2, upper=50> y[N]; // temperature
+            real a_m; // intercept_mean
+            real b_m; // slope_mean
+            real sigma_a; // intercept_std
+            real sigma_b; // slope_std
+            real d18_O_w_new[K]; // new data
+            real d18_O_c_new[K]; // new data
+        }
+        
+        
+        transformed data {
+            real x_new[K];
+            for (i in 1:K)
+                x_new[i] = (d18_O_c_new[i] - d18_O_w_new[i]);   // difference between the two new d18_O values
+        }
+        
+        
+        parameters {
+            real a; // intercept
+            real b; // slope
+            real<lower=0, upper=2> sigma; // standard deviation
+        }
+        
+        transformed parameters {
+            real theta[N];  
+            
+            for (i in 1:N)
+                theta[i] = a + b * (d18_O_c[i] - d18_O_w[i]);        // difference between the two observed d18_O values
+        
+        }
+        
             
         model {
             
@@ -110,11 +157,13 @@ def get_stan_code(question = "Q1"):
             target += normal_lpdf(b | b_m, sigma_b);
             target += normal_lpdf(y | theta, sigma);
         }
-    """
-    
-    
-    stan_code_q4 = """
-    
+        
+        generated quantities {
+            vector[K] y_new;
+            for (k in 1:K)
+                y_new[k] = normal_rng(a + b * x_new[k], sigma);
+        }
+       
     """
     
     stan_codes = {
@@ -122,7 +171,8 @@ def get_stan_code(question = "Q1"):
        "Q2": stan_code_q2,
        "Q3_A": stan_code_q3,
        "Q3_B": stan_code_q3_mix_pooling,
-       "Q4": stan_code_q4
+       "Q4_A": stan_code_q4,
+       "Q4_B": stan_code_q4,
     }
 
     return stan_codes[question]

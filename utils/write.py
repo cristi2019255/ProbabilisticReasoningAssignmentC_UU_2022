@@ -14,9 +14,12 @@
 
 import os
 
-def write_results(fit, file_name = "results.txt", cols = ["a", "b", "sigma"], folder = "Q1"):
+def write_results(fit, file_name = "results.txt", cols = ["a", "b", "sigma"], folder = "Q1", described = False):
     os.makedirs(os.path.join("results", folder), exist_ok = True)
     file_name = os.path.join("results", folder, file_name)
     
-    results = fit.describe()[cols]
+    if not described:
+        fit = fit.describe()
+        
+    results = fit[cols]
     results.to_csv(file_name, sep = ",", index = True)
