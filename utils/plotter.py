@@ -41,7 +41,7 @@ def plot_predictions(x: List[float], y: List[float], pred: pd.DataFrame, another
     plt.errorbar(x, means, yerr=stds, color="red", label="Predicted temperature", fmt=".", capsize=5, capthick=2, ecolor="red", elinewidth=2)
     
     if another_pred is not None:
-        plt.errorbar(x, another_pred["mean"].to_list(), yerr=another_pred["std"].to_list(), color="green", label="Predicted temperature without considering uncertainty", fmt=".", capsize=5, capthick=2, ecolor="green", elinewidth=2, alpha=0.5)
+        plt.errorbar(x + 0.03, another_pred["mean"].to_list(), yerr=another_pred["std"].to_list(), color="green", label="Predicted temperature without considering uncertainty", fmt=".", capsize=5, capthick=2, ecolor="green", elinewidth=2, alpha=0.5)
     
     plt.legend()
     file_name = os.path.join("plots", folder, file_name)

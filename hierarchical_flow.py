@@ -116,12 +116,12 @@ def get_data_for_species(data_df_species, species, question = "Q1"):
             "sigma_b": df_species["b"][2]
         }
         
-        if question == "Q4_A":
+        if question in ["Q4_A", "Q4_B"]:
             data["d18_O_w_new"] = data["d18_O_w"]
             data["d18_O_c_new"] = data["d18_O_c"]
-        elif question == "Q4_B":
-            data["d18_O_w_new"] = data["d18_O_w"] + np.random.normal(0, data_df_species["d18_O_w_sd"], len(data_df_species))
-            data["d18_O_c_new"] = data["d18_O_c"] + np.random.normal(0, data_df_species["d18_O_sd"], len(data_df_species))
+            if question == "Q4_B":
+                data["d18_O_w_std"] = data_df_species["d18_O_w_sd"].to_list()[0]
+                data["d18_O_c_std"] = data_df_species["d18_O_sd"].to_list()[0]
         data["K"] = data["N"]        
     return data
     
