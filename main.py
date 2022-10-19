@@ -16,7 +16,7 @@
 from hierarchical_flow import hierarchical_flow, hierarchical_flow_Q4
 from simple_flow import simple_flow
 
-QUESTION = "Q4_B"
+QUESTION = "Q1"
 
 def main():
     question_solvers = {

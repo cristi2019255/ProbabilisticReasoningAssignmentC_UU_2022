@@ -22,6 +22,7 @@ from utils.stan_models import get_stan_code
 from utils.plotter import plot_data_and_fit
 from utils.write import write_results
 import os
+import arviz as av
 
 def hierarchical_flow( question = "Q1"):
     stan_code = get_stan_code( question= question)
@@ -46,7 +47,7 @@ def hierarchical_flow( question = "Q1"):
     
         fit = posterior.sample(num_chains=4, num_samples=100)
         df = fit.to_frame()
-        print(df)
+        print(av.summary(fit))        
         print(df.describe().T)    
        
         write_results(df, file_name = "results.txt", cols = ["a", "b", "sigma"], folder=os.path.join( question, "species_" + species))
@@ -84,6 +85,7 @@ def hierarchical_flow_Q4(question = "Q4_A"):
         df = fit.to_frame()
         cols = [f"y_new.{(i+1)}" for i in range(len(x))]
         df = df[cols].describe().T
+        print(av.summary(fit))
         
         df_simple = None
         if question == "Q4_B":

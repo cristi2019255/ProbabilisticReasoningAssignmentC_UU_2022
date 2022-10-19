@@ -20,6 +20,7 @@ import stan
 from utils.stan_models import get_stan_code
 from utils.plotter import plot_data_and_fit
 from utils.write import write_results
+import arviz as av
 
 def simple_flow(question = "Q1"):
     stan_code = get_stan_code(question=question)
@@ -46,7 +47,7 @@ def simple_flow(question = "Q1"):
     
     fit = posterior.sample(num_chains=4, num_samples=1000)
     df = fit.to_frame()
-    print(df)
+    print(av.summary(fit))
     print(df.describe().T)    
        
     # getting the parameters from the posterior   
