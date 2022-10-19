@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from model_function import construct_model_function
-from utils.plotter import plot_data
+from utils.plotter import plot_data, plot_predictions
 from utils.read import read_data
 import numpy as np
 import stan
@@ -49,6 +49,13 @@ def simple_flow(question = "Q1"):
     df = fit.to_frame()
     print(av.summary(fit))
     print(df.describe().T)    
+    
+    if question == "Q2":
+        cols = [f"y_new.{(i+1)}" for i in range(len(x))]
+        dff = df[cols].describe().T
+        print(dff)
+        plot_predictions(x, y, dff, title="Temperature vs d18_O", x_label= "d18_O_c - d18_O_w", y_label = "Temperature T", file_name = "prior_predictive_check.png", folder = "Q2")
+
        
     # getting the parameters from the posterior   
     write_results(df, file_name = "results.txt", cols = ["a", "b", "sigma"], folder=question)

@@ -22,4 +22,8 @@ def write_results(fit, file_name = "results.txt", cols = ["a", "b", "sigma"], fo
         fit = fit.describe()
         
     results = fit[cols]
+    for col in cols:
+        vals = results.loc[:, col]
+        vals = vals.apply(lambda x: "{:.3f}".format(x))
+        results.loc[:, col] = vals
     results.to_csv(file_name, sep = ",", index = True)

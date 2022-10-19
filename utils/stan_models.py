@@ -45,7 +45,7 @@ def get_stan_code(question = "Q1"):
         parameters {
             real a;
             real b;
-            real<lower=0, upper=2> sigma;
+            real sigma;
         }
         
         transformed parameters {
@@ -56,7 +56,14 @@ def get_stan_code(question = "Q1"):
             
         model {
             for (i in 1:N)
-                y[i] ~ normal(a + b * diff[i], sigma);                    
+                y[i] ~ normal(a + b * diff[i], sigma - 1);                    
+        }
+        
+        generated quantities {
+            vector[N] y_new;
+            
+            for (k in 1:N)
+                y_new[k] = normal_rng(a + b * (d18_O_c[k] - d18_O_w[k]), sigma - 1);
         }
     """
     
@@ -71,7 +78,7 @@ def get_stan_code(question = "Q1"):
         parameters {
             real a; // intercept
             real b; // slope
-            real<lower=0, upper=2> sigma; // standard deviation
+            real sigma; // standard deviation
         }
             
         model {
@@ -95,7 +102,7 @@ def get_stan_code(question = "Q1"):
         parameters {
             real a; // intercept
             real b; // slope
-            real<lower=0, upper=2> sigma; // standard deviation
+            real sigma; // standard deviation
         }
         
         transformed parameters {
@@ -139,7 +146,7 @@ def get_stan_code(question = "Q1"):
         parameters {
             real a; // intercept
             real b; // slope
-            real<lower=0, upper=2> sigma; // standard deviation
+            real sigma; // standard deviation
         }
         
         transformed parameters {
@@ -188,7 +195,7 @@ def get_stan_code(question = "Q1"):
         parameters {
             real a; // intercept
             real b; // slope
-            real<lower=0, upper=2> sigma; // standard deviation
+            real sigma; // standard deviation
             real d18_O_c_s[K];
             real d18_O_w_s[K]; 
         }
