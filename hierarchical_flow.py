@@ -23,6 +23,7 @@ from utils.plotter import plot_data_and_fit
 from utils.write import write_results
 import os
 import arviz as av
+import pandas as pd
 
 def hierarchical_flow_Q3_A():
     question = "Q3_A"
@@ -111,37 +112,35 @@ def hierarchical_flow_Q4_A():
     data_df = read_data("data/merged_data.csv", cols = ["d18_O_w", "d18_O", "temperature", "species", "d18_O_w_sd", "d18_O_sd"])
     
     species = data_df["species"].unique()
-    specie = species[1]
+    specie = species[5]
     data_df_species = data_df[data_df["species"] == specie]
     
-    data = {
-        "J": len(species),
-        "N": len(data_df),
-        "group": [i+1 for i in range(len(species)) for j in range(len(data_df[data_df["species"] == species[i]]))],
-        "d18_O_w": np.array(data_df["d18_O_w"]),
-        "d18_O_c": np.array(data_df["d18_O"]),
-        "T": np.array(data_df["temperature"]),
-        "specie": 2,
-        "K": len(data_df_species),
-        "d18_O_w_new": np.array(data_df_species["d18_O_w"]),
-        "d18_O_c_new": np.array(data_df_species["d18_O"]),
-    }
+    d18_O_w = np.array(data_df_species["d18_O_w"])
+    d18_O_c = np.array(data_df_species["d18_O"])
     
-    # fit the model
-    posterior = stan.build(stan_code, data=data, random_seed=1)
-    fit = posterior.sample()
-    model_df = fit.to_frame()
-    print(av.summary(fit))        
-    print(model_df.describe().T)
+    a_m = 18.398
+    b_m = -4.637
+    sigma = 2.191
+    sigma_a = 1.429
+    sigma_b = 0.478
     
+    df = pd.DataFrame()
+    a = np.random.normal(a_m, sigma_a)
+    b = np.random.normal(b_m, sigma_b)
+    for i in range(len(d18_O_w)):
+        y_pred = np.random.normal(a + b * (d18_O_c[i] - d18_O_w[i]), sigma, size = 1000) 
+        y_pred_mean = np.mean(y_pred)
+        y_pred_std = np.std(y_pred)
+        df[f"y_{i}"] = [y_pred_mean, y_pred_std]
+    
+    df = df.T
+    df.columns = ["mean", "std"]
+    print(df)
     
     x = np.array(data_df_species["d18_O"]) - np.array(data_df_species["d18_O_w"])
     y = data_df_species["temperature"]
     # plotting the data
     plot_data(x, y, folder = os.path.join(question, specie), title = "Temperature vs. d18_O for " + specie)
-    
-    cols = [f"y_new.{(i+1)}" for i in range(len(x))]
-    df = model_df[cols].describe().T
         
     plot_predictions(x, y, df, folder = os.path.join(question, specie), title = "Temperature vs. d18_O for " + specie, file_name = "predictions.png")
         
@@ -157,42 +156,41 @@ def hierarchical_flow_Q4_B():
     data_df = read_data("data/merged_data.csv", cols = ["d18_O_w", "d18_O", "temperature", "species", "d18_O_w_sd", "d18_O_sd"])
     
     species = data_df["species"].unique()
-    specie = species[1]
+    specie = species[5]
     data_df_species = data_df[data_df["species"] == specie]
     
-    data = {
-        "J": len(species),
-        "N": len(data_df),
-        "group": [i+1 for i in range(len(species)) for j in range(len(data_df[data_df["species"] == species[i]]))],
-        "d18_O_w": np.array(data_df["d18_O_w"]),
-        "d18_O_c": np.array(data_df["d18_O"]),
-        "T": np.array(data_df["temperature"]),
-        
-        "specie": 2,
-        "K": len(data_df_species),
-        "d18_O_w_new": np.array(data_df_species["d18_O_w"]),
-        "d18_O_c_new": np.array(data_df_species["d18_O"]),
-        "d18_O_w_std": np.array(data_df_species["d18_O_w_sd"])[0],
-        "d18_O_c_std": np.array(data_df_species["d18_O_sd"])[0],
+    d18_O_w = np.array(data_df_species["d18_O_w"])
+    d18_O_c = np.array(data_df_species["d18_O"])
     
-    }
+    a_m = 18.398
+    b_m = -4.637
+    sigma = 2.191
+    sigma_a = 1.429
+    sigma_b = 0.478
     
-    # fit the model
-    posterior = stan.build(stan_code, data=data, random_seed=1)
-    fit = posterior.sample()
-    model_df = fit.to_frame()
-    print(av.summary(fit))        
-    print(model_df.describe().T)
+    df = pd.DataFrame()
+    a = np.random.normal(a_m, sigma_a)
+    b = np.random.normal(b_m, sigma_b)
     
+    d18_O_w_std = np.array(data_df_species["d18_O_w_sd"])[0]
+    d18_O_c_std = np.array(data_df_species["d18_O_sd"])[0]
+    
+    
+    for i in range(len(d18_O_w)):
+        d18_O_w_i = np.random.normal(d18_O_w[i], d18_O_w_std)
+        d18_O_c_i = np.random.normal(d18_O_c[i], d18_O_c_std)
+        y_pred = np.random.normal(a + b * (d18_O_c_i - d18_O_w_i), sigma, size = 1000)
+        y_pred_mean = np.mean(y_pred)
+        y_pred_std = np.std(y_pred)
+        df[f"y_{i}"] = [y_pred_mean, y_pred_std]
+    
+    df = df.T
+    df.columns = ["mean", "std"]
+    print(df)
     
     x = np.array(data_df_species["d18_O"]) - np.array(data_df_species["d18_O_w"])
     y = data_df_species["temperature"]
-    # plotting the data
-    plot_data(x, y, folder = os.path.join(question, specie), title = "Temperature vs. d18_O for " + specie)
-    
-    cols = [f"y_new.{(i+1)}" for i in range(len(x))]
-    df = model_df[cols].describe().T
-    
+   
     df_simple = read_stan_results(os.path.join("results", "Q4_A", "species_" + specie, "results.txt"))
 
     plot_predictions(x, y, df, another_pred = df_simple, folder = os.path.join(question, specie), title = "Temperature vs. d18_O for " + specie, file_name = "predictions.png")
