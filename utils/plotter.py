@@ -17,6 +17,8 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 
+from model_function import construct_model_function
+
 def plot_data(x: List[float], y: List[float], title="Temperature vs d18_O", x_label= "d18_O_c - d18_O_w", y_label = "Temperature T", file_name = "data.png", folder = "Q1"):
     os.makedirs(os.path.join("plots", folder), exist_ok=True)    
     plt.figure(figsize=(15, 10))
@@ -85,18 +87,20 @@ def plot_data_and_fit_no_pooling_and_mix_pooling(x: List[float], y: List[float],
     
     # plotting no pooling
     
-    # plotting the mean of the posterior distribution
-    means = fit_no_pooling[cols].mean()
-    stds = fit_no_pooling[cols].std()
+    # plotting the mean of the posterior distribution    
+    cols_no_pooling = ["a", "b", "sigma"]
+    model_function_no_pooling = construct_model_function(cols_no_pooling)
+    means = fit_no_pooling[cols_no_pooling].mean()
+    stds = fit_no_pooling[cols_no_pooling].std()
     label = f"{model_name} no pooling"
-    for col in cols:
+    for col in cols_no_pooling:
         label += f", {col}_mean = {means[col]:.2f} (+/- {stds[col]:.2f})"
                 
-    plt.plot(x, model_function(x, means), color="red", label=label)
+    plt.plot(x, model_function_no_pooling(x, means), color="red", label=label)
     
     # plotting samples from the posterior distribution to show the uncertainty cloud
-    for index, params in fit_no_pooling[cols].iterrows():
-        plt.plot(x, model_function(x, params), color="green", alpha=0.05)
+    for index, params in fit_no_pooling[cols_no_pooling].iterrows():
+        plt.plot(x, model_function_no_pooling(x, params), color="green", alpha=0.05)
     
     
     # plotting mix pooling

@@ -134,118 +134,103 @@ def get_stan_code(question = "Q1"):
     
     stan_code_q4 = """
         data {            
+            int<lower=0> J; // number of groups
             int<lower=0> N; // number of observations
-            int<lower=0> K; // number of new observations    
-            real d18_O_w[N]; // d18_O of water
-            real d18_O_c[N]; // d18_O of carbon
-            real<lower=-2, upper=50> y[N]; // temperature
-            real d18_O_w_new[K]; // new data
-            real d18_O_c_new[K]; // new data
+            int group[N]; // group indicator
+            vector[N] d18_O_w; // matrix of d18_O of water
+            vector[N] d18_O_c; // matrix of d18_O of carbon
+            vector[N] T; // temperature                
+            
+            int K; // number of new observations
+            int specie; // species indicator
+            vector[K] d18_O_w_new; // new data
+            vector[K] d18_O_c_new; // new data
         }
-        
-        
-        transformed data {
-            real x_new[K];
-            for (i in 1:K)
-                x_new[i] = (d18_O_c_new[i] - d18_O_w_new[i]);   // difference between the two new d18_O values
-        }
-        
         
         parameters {
-            real a; // intercept
-            real b; // slope
-            real<lower=0> sigma; // standard deviation
-
-            real a_m; // intercept
-            real b_m; // slope
-            real sigma_a; // intercept_std
-            real sigma_b; // slope_std
+            real A; // intercept
+            real B; // slope
+            vector[J] a; // intercept
+            vector[J] b; // slope
+            real sigma; // standard deviation
+            real<lower=0> sigma_a; // intercept_std
+            real<lower=0> sigma_b; // slope_std
         }
         
-        transformed parameters {
-            real theta[N];  
+        model {
+            A ~ uniform(-2, 50);
+            B ~ normal(0, 1);
+            sigma_a ~ normal(1, 1);
+            sigma_b ~ normal(0.5, 0.5);
+            a ~ normal(A, sigma_a);
+            b ~ normal(B, sigma_b);
             
-            for (i in 1:N)
-                theta[i] = a + b * (d18_O_c[i] - d18_O_w[i]);        // difference between the two observed d18_O values
-        
-        }
-        
-        model { 
-            a_m ~ uniform(-2, 50);
-            b_m ~ normal(0, 1);
-            sigma_a ~ uniform(0, 2);
-            sigma_b ~ uniform(0, 1);
-         
-            target += normal_lpdf(a | a_m, sigma_a);
-            target += normal_lpdf(b | b_m, sigma_b);
-            target += normal_lpdf(y | theta, sigma);
+            
+            for (i in 1:N)                
+                T[i] ~ normal(a[group[i]] + b[group[i]] * (d18_O_c[i] - d18_O_w[i]), sigma);
         }
         
         generated quantities {
             vector[K] y_new;
-            for (k in 1:K)
-                y_new[k] = normal_rng(a + b * x_new[k], sigma);
+            for (k in 1:K){
+                y_new[k] = normal_rng(a[specie] + b[specie] * (d18_O_c[k] - d18_O_w[k]), sigma);
+            }        
         }
     """
 
     stan_code_q4_b = """
         data {            
+            int<lower=0> J; // number of groups
             int<lower=0> N; // number of observations
-            int<lower=0> K; // number of new observations
+            int group[N]; // group indicator
+            vector[N] d18_O_w; // matrix of d18_O of water
+            vector[N] d18_O_c; // matrix of d18_O of carbon
+            vector[N] T; // temperature                
             
-            real d18_O_w[N]; // d18_O of water
-            real d18_O_c[N]; // d18_O of carbon
-            real<lower=-2, upper=50> y[N]; // temperature
-            real d18_O_w_new[K]; // new data
-            real d18_O_c_new[K]; // new data
-        
+            int K; // number of new observations
+            int specie; // species indicator
+            vector[K] d18_O_w_new; // new data
+            vector[K] d18_O_c_new; // new data
             real d18_O_c_std; // new data std
             real d18_O_w_std; // new data std
-        }
         
+        }
         
         parameters {
-            real a; // intercept
-            real b; // slope
+            real A; // intercept
+            real B; // slope
+            vector[J] a; // intercept
+            vector[J] b; // slope
             real sigma; // standard deviation
-            real a_m; // intercept
-            real b_m; // slope
-            real sigma_a; // intercept_std
-            real sigma_b; // slope_std
-            real d18_O_c_s[K];
-            real d18_O_w_s[K]; 
+            real<lower=0> sigma_a; // intercept_std
+            real<lower=0> sigma_b; // slope_std
         }
         
-        transformed parameters {
-            real theta[N];  
-            
-            for (i in 1:N)
-                theta[i] = a + b * (d18_O_c[i] - d18_O_w[i]);        // difference between the two observed d18_O values
-        
-        }
-        
-            
         model {
-            a_m ~ uniform(-2, 50);
-            b_m ~ normal(0, 1);
-            sigma_a ~ uniform(0, 2);
-            sigma_b ~ uniform(0, 1);
-               
-            target += normal_lpdf(a | a_m, sigma_a);
-            target += normal_lpdf(b | b_m, sigma_b);
-            target += normal_lpdf(y | theta, sigma);
-
-            d18_O_c_s ~ normal(d18_O_c_new, d18_O_c_std);
-            d18_O_w_s ~ normal(d18_O_w_new, d18_O_w_std);
+            A ~ uniform(-2, 50);
+            B ~ normal(0, 1);
+            sigma_a ~ normal(1, 1);
+            sigma_b ~ normal(0.5, 0.5);
+            a ~ normal(A, sigma_a);
+            b ~ normal(B, sigma_b);
             
+            
+            for (i in 1:N)                
+                T[i] ~ normal(a[group[i]] + b[group[i]] * (d18_O_c[i] - d18_O_w[i]), sigma);
         }
         
         generated quantities {
             vector[K] y_new;
-            
-            for (k in 1:K)
-                y_new[k] = normal_rng(a + b * (d18_O_c_s[k] - d18_O_w_s[k]), sigma);
+            real d18_O_c_s[K];
+            real d18_O_w_s[K]; 
+        
+            for (k in 1:K){
+                d18_O_c_s[k] = normal_rng(d18_O_c_new[k], d18_O_c_std);
+                d18_O_w_s[k] = normal_rng(d18_O_w_new[k], d18_O_w_std);
+                y_new[k] = normal_rng(a[specie] + b[specie] * (d18_O_c_s[k] - d18_O_w_s[k]), sigma);
+            }        
         }
+        
     """
     
     
