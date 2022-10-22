@@ -125,10 +125,14 @@ def hierarchical_flow_Q4_A():
     sigma_b = 0.478
     
     df = pd.DataFrame()
-    a = np.random.normal(a_m, sigma_a)
-    b = np.random.normal(b_m, sigma_b)
     for i in range(len(d18_O_w)):
-        y_pred = np.random.normal(a + b * (d18_O_c[i] - d18_O_w[i]), sigma, size = 1000) 
+        y_pred = np.array([])
+        a = np.random.normal(a_m, sigma_a, size = 50)
+        b = np.random.normal(b_m, sigma_b, size = 50)
+        
+        for j in range(len(a)):
+            y_pred = np.concatenate((y_pred, np.random.normal(a[j] + b[j] * (d18_O_c[i] - d18_O_w[i]), sigma, size = 1000)))
+        
         y_pred_mean = np.mean(y_pred)
         y_pred_std = np.std(y_pred)
         df[f"y_{i}"] = [y_pred_mean, y_pred_std]
@@ -145,9 +149,7 @@ def hierarchical_flow_Q4_A():
     plot_predictions(x, y, df, folder = os.path.join(question, specie), title = "Temperature vs. d18_O for " + specie, file_name = "predictions.png")
         
     write_results(df, file_name = "results.txt", cols = ["mean", "std"], folder=os.path.join( question, "species_" + specie), described=True)
-
-    print("PROCESSED SPECIE " + specie)
-    
+ 
 def hierarchical_flow_Q4_B():
     question = "Q4_B"
     stan_code = get_stan_code( question= question)
@@ -169,17 +171,23 @@ def hierarchical_flow_Q4_B():
     sigma_b = 0.478
     
     df = pd.DataFrame()
-    a = np.random.normal(a_m, sigma_a)
-    b = np.random.normal(b_m, sigma_b)
     
-    d18_O_w_std = np.array(data_df_species["d18_O_w_sd"])[0]
-    d18_O_c_std = np.array(data_df_species["d18_O_sd"])[0]
     
     
     for i in range(len(d18_O_w)):
-        d18_O_w_i = np.random.normal(d18_O_w[i], d18_O_w_std)
-        d18_O_c_i = np.random.normal(d18_O_c[i], d18_O_c_std)
-        y_pred = np.random.normal(a + b * (d18_O_c_i - d18_O_w_i), sigma, size = 1000)
+        d18_O_w_std = np.array(data_df_species["d18_O_w_sd"])[i]
+        d18_O_c_std = np.array(data_df_species["d18_O_sd"])[i]
+        
+        a = np.random.normal(a_m, sigma_a, size = 50)
+        b = np.random.normal(b_m, sigma_b, size = 50)
+        y_pred = np.array([])
+        
+        for j in range(len(a)):         
+            d18_O_w_i = np.random.normal(d18_O_w[i], d18_O_w_std, size = 50)
+            d18_O_c_i = np.random.normal(d18_O_c[i], d18_O_c_std, size = 50)
+            for k in range(len(d18_O_w_i)):
+                y_pred = np.concatenate((y_pred, np.random.normal(a[j] + b[j] * (d18_O_c_i[k] - d18_O_w_i[k]), sigma, size = 100)))
+       
         y_pred_mean = np.mean(y_pred)
         y_pred_std = np.std(y_pred)
         df[f"y_{i}"] = [y_pred_mean, y_pred_std]
@@ -195,7 +203,8 @@ def hierarchical_flow_Q4_B():
 
     plot_predictions(x, y, df, another_pred = df_simple, folder = os.path.join(question, specie), title = "Temperature vs. d18_O for " + specie, file_name = "predictions.png")
 
-        
+    write_results(df, file_name = "results.txt", cols = ["mean", "std"], folder=os.path.join( question, "species_" + specie), described=True)
+    
 def get_data_for_species(data_df_species):
     return {
             "N": len(data_df_species),
