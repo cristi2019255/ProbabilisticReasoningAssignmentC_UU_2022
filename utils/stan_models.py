@@ -42,28 +42,39 @@ def get_stan_code(question = "Q1"):
             real<lower=-2, upper=50> y[N]; // temperature
         }
         
-        parameters {
-            real a;
-            real b;
-            real sigma;
-        }
-        
-        transformed parameters {
+        transformed data {
             real<lower=-4, upper=5> diff[N];  
             for (i in 1:N)
                 diff[i] = d18_O_c[i] - d18_O_w[i];        // difference between the two d18_O values
         }
-            
-        model {
-            for (i in 1:N)
-                y[i] ~ normal(a + b * diff[i], sigma - 1);                    
+        
+        parameters {
+            real a;
+            real b;
+            real<lower=1> sigma;
         }
+    
+        model { 
+        
+            a ~ uniform(-2, 50);
+            b ~ normal(0, 1);
+             
+            for (i in 1:N)
+                y[i] ~ normal(a + b * diff[i], sigma);                    
+        }        
         
         generated quantities {
-            vector[N] y_new;
-            
-            for (k in 1:N)
-                y_new[k] = normal_rng(a + b * (d18_O_c[k] - d18_O_w[k]), sigma - 1);
+            real y_new;
+            real<lower=-4, upper=5> diff;
+            real a_new;
+            real b_new;
+            real sigma_new;
+             
+            diff = uniform_rng(-4, 5);    
+            a_new = uniform_rng(-2, 50);
+            b_new = normal_rng(0, 1);
+              
+            y_new = normal_rng(a_new + b_new * diff, sigma);
         }
     """
     
@@ -81,7 +92,7 @@ def get_stan_code(question = "Q1"):
             real sigma; // standard deviation
         }
             
-        model {
+        model {        
             for (i in 1:N)
                 y[i] ~ normal(a + b * (d18_O_c[i] - d18_O_w[i]), sigma);                    
         }
@@ -89,48 +100,45 @@ def get_stan_code(question = "Q1"):
     
     stan_code_q3_mix_pooling = """
         data {            
+            int<lower=0> J; // number of groups
             int<lower=0> N; // number of observations
-            real d18_O_w[N]; // d18_O of water
-            real d18_O_c[N]; // d18_O of carbon
-            real<lower=-2, upper=50> y[N]; // temperature
-            real a_m; // intercept_mean
-            real b_m; // slope_mean
-            real sigma_a; // intercept_std
-            real sigma_b; // slope_std
+            int group[N]; // group indicator
+            vector[N] d18_O_w; // matrix of d18_O of water
+            vector[N] d18_O_c; // matrix of d18_O of carbon
+            vector[N] T; // temperature                
         }
         
         parameters {
-            real a; // intercept
-            real b; // slope
+            real A; // intercept
+            real B; // slope
+            vector[J] a; // intercept
+            vector[J] b; // slope
             real sigma; // standard deviation
+            real<lower=0> sigma_a; // intercept_std
+            real<lower=0> sigma_b; // slope_std
         }
         
-        transformed parameters {
-            real theta[N];
-            
-            for (i in 1:N)
-                theta[i] = a + b * (d18_O_c[i] - d18_O_w[i]);        // difference between the two observed d18_O values
-        }
-            
         model {
-            target += normal_lpdf(a | a_m, sigma_a);
-            target += normal_lpdf(b | b_m, sigma_b);
-            target += normal_lpdf(y | theta, sigma);
+            A ~ uniform(-2, 50);
+            B ~ normal(0, 1);
+            sigma_a ~ normal(1, 1);
+            sigma_b ~ normal(0.5, 0.5);
+            a ~ normal(A, sigma_a);
+            b ~ normal(B, sigma_b);
+            
+            
+            for (i in 1:N)                
+                T[i] ~ normal(a[group[i]] + b[group[i]] * (d18_O_c[i] - d18_O_w[i]), sigma);
         }
     """
     
     stan_code_q4 = """
         data {            
             int<lower=0> N; // number of observations
-            int<lower=0> K; // number of new observations
-            
+            int<lower=0> K; // number of new observations    
             real d18_O_w[N]; // d18_O of water
             real d18_O_c[N]; // d18_O of carbon
             real<lower=-2, upper=50> y[N]; // temperature
-            real a_m; // intercept_mean
-            real b_m; // slope_mean
-            real sigma_a; // intercept_std
-            real sigma_b; // slope_std
             real d18_O_w_new[K]; // new data
             real d18_O_c_new[K]; // new data
         }
@@ -146,7 +154,12 @@ def get_stan_code(question = "Q1"):
         parameters {
             real a; // intercept
             real b; // slope
-            real sigma; // standard deviation
+            real<lower=0> sigma; // standard deviation
+
+            real a_m; // intercept
+            real b_m; // slope
+            real sigma_a; // intercept_std
+            real sigma_b; // slope_std
         }
         
         transformed parameters {
@@ -157,9 +170,12 @@ def get_stan_code(question = "Q1"):
         
         }
         
-            
-        model {
-            
+        model { 
+            a_m ~ uniform(-2, 50);
+            b_m ~ normal(0, 1);
+            sigma_a ~ uniform(0, 2);
+            sigma_b ~ uniform(0, 1);
+         
             target += normal_lpdf(a | a_m, sigma_a);
             target += normal_lpdf(b | b_m, sigma_b);
             target += normal_lpdf(y | theta, sigma);
@@ -173,17 +189,13 @@ def get_stan_code(question = "Q1"):
     """
 
     stan_code_q4_b = """
-          data {            
+        data {            
             int<lower=0> N; // number of observations
             int<lower=0> K; // number of new observations
             
             real d18_O_w[N]; // d18_O of water
             real d18_O_c[N]; // d18_O of carbon
             real<lower=-2, upper=50> y[N]; // temperature
-            real a_m; // intercept_mean
-            real b_m; // slope_mean
-            real sigma_a; // intercept_std
-            real sigma_b; // slope_std
             real d18_O_w_new[K]; // new data
             real d18_O_c_new[K]; // new data
         
@@ -196,6 +208,10 @@ def get_stan_code(question = "Q1"):
             real a; // intercept
             real b; // slope
             real sigma; // standard deviation
+            real a_m; // intercept
+            real b_m; // slope
+            real sigma_a; // intercept_std
+            real sigma_b; // slope_std
             real d18_O_c_s[K];
             real d18_O_w_s[K]; 
         }
@@ -210,7 +226,11 @@ def get_stan_code(question = "Q1"):
         
             
         model {
-            
+            a_m ~ uniform(-2, 50);
+            b_m ~ normal(0, 1);
+            sigma_a ~ uniform(0, 2);
+            sigma_b ~ uniform(0, 1);
+               
             target += normal_lpdf(a | a_m, sigma_a);
             target += normal_lpdf(b | b_m, sigma_b);
             target += normal_lpdf(y | theta, sigma);

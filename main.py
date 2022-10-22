@@ -13,22 +13,22 @@
 # limitations under the License.
 
 
-from hierarchical_flow import hierarchical_flow, hierarchical_flow_Q4
-from simple_flow import simple_flow
+from hierarchical_flow import hierarchical_flow_Q3_A, hierarchical_flow_Q3_B, hierarchical_flow_Q4_A, hierarchical_flow_Q4_B
+from simple_flow import simple_flow_Q1, simple_flow_Q2
 
-QUESTION = "Q1"
+QUESTION = "Q3_B"
 
 def main():
     question_solvers = {
-        "Q1": simple_flow,
-        "Q2": simple_flow,
-        "Q3_A": hierarchical_flow,
-        "Q3_B": hierarchical_flow,
-        "Q4_A": hierarchical_flow_Q4,
-        "Q4_B": hierarchical_flow_Q4
+        "Q1": simple_flow_Q1,
+        "Q2": simple_flow_Q2,
+        "Q3_A": hierarchical_flow_Q3_A,
+        "Q3_B": hierarchical_flow_Q3_B,
+        "Q4_A": hierarchical_flow_Q4_A,
+        "Q4_B": hierarchical_flow_Q4_B
     }
     if QUESTION in question_solvers:
-        question_solvers[QUESTION](QUESTION)
+        question_solvers[QUESTION]()
     else:
         print("Question not implemented")
 
